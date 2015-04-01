@@ -146,7 +146,7 @@ util.encodeHash = function (source, base) {
     list.push(key)
     list.push(source[key])
   })
-  return util.encodeList(list)
+  return util.encodeList(list, base)
 }
 
 util.decodeHash = function (buffer, base) {
