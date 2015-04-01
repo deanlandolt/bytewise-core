@@ -1,11 +1,11 @@
 {
   "name": "bytewise-core",
-  "version": "1.0.0",
+  "version": "1.0.0-pre",
   "description": "Binary serialization of arbitrarily complex structures that sort element-wise",
   "main": "index.js",
   "dependencies": {
     "bops": "^0.1",
-    "typewise-core": "^1.0"
+    "typewise-core": "https://github.com/deanlandolt/typewise-core/tarball/master"
   },
   "devDependencies": {
     "tape": "^1"
