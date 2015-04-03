@@ -1,5 +1,3 @@
-'use strict'
-
 var assert = require('assert')
 var bops = require('bops')
 
@@ -110,14 +108,14 @@ util.encodeList = function (source, base) {
 
   for (var i = 0, end = source.length; i < end; ++i) {
     var buffer = base.encode(source[i])
-    var type = base.getType(buffer[0])
-    assert.ok(type, 'List encoding failure: ' + buffer)
+    var sort = base.getSort(buffer[0])
+    assert.ok(sort, 'List encoding failure: ' + buffer)
 
     //
-    // types which need escapement when nested have an escape function on codec
+    // sorts which need escapement when nested have an escape function on codec
     //
-    if (type.codec && type.codec.escape)
-      buffers.push(type.codec.escape(buffer))
+    if (sort.codec && sort.codec.escape)
+      buffers.push(sort.codec.escape(buffer))
 
     else
       buffers.push(buffer)
@@ -161,36 +159,36 @@ util.decodeHash = function (buffer, base) {
 }
 
 //
-// base parser for nested/recursive types
+// base parser for nested/recursive sorts
 //
-util.parse = function (buffer, base, type) {
+util.parse = function (buffer, base, sort) {
   //
-  // parses and returns the first type on the buffer and total bytes consumed
+  // parses and returns the first sort on the buffer and total bytes consumed
   //
-  var codec = type && type.codec
+  var codec = sort && sort.codec
   var index, end
 
   //
   // nullary
   //
-  if (type && !codec) 
-    return [ base.decode(bops.from([ type.prefix ])), 0 ]
+  if (sort && !codec) 
+    return [ base.decode(bops.from([ sort.prefix ])), 0 ]
 
   //
-  // custom parse implementation provided by type
+  // custom parse implementation provided by sort
   //
   if (codec && codec.parse)
-    return codec.parse(buffer, base, type)
+    return codec.parse(buffer, base, sort)
 
   //
-  // fixed length type, decode fixed bytes
+  // fixed length sort, decode fixed bytes
   //
   var length = codec && codec.length
   if (typeof length === 'number')
     return [ codec.decode(bops.subarray(buffer, 0, length)), length ]
 
   //
-  // escaped type, seek to end byte and unescape
+  // escaped sort, seek to end byte and unescape
   //
   if (codec && codec.unescape) {
     for (index = 0, end = buffer.length; index < end; ++index) {
@@ -208,18 +206,18 @@ util.parse = function (buffer, base, type) {
   }
 
   //
-  // recursive type, resolve each item iteratively
+  // recursive sort, resolve each item iteratively
   //
   index = 0
   var list = []
   var next
   while ((next = buffer[index]) !== 0x00) {
-    type = base.getType(next)
-    var result = util.parse(bops.subarray(buffer, index + 1), base, type)
+    sort = base.getSort(next)
+    var result = util.parse(bops.subarray(buffer, index + 1), base, sort)
     list.push(result[0])
 
     //
-    // offset current index by bytes consumed (plus a byte for the type tag)
+    // offset current index by bytes consumed (plus a byte for the sort tag)
     //
     index += result[1] + 1
     assert(index < buffer.length, 'No closing byte found for nested sequence')

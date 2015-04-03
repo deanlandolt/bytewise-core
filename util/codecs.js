@@ -53,14 +53,14 @@ codecs.HEX = {
   }
 }
 
-codecs.BINARY = {
+codecs.UINT8 = {
   encode: identity,
   decode: identity,
   escape: util.escapeFlat,
   unescape: util.unescapeFlat
 }
 
-codecs.BINARY_SHORTLEX = shortlex(codecs.BINARY)
+codecs.UINT8_SHORTLEX = shortlex(codecs.UINT8)
 
 codecs.UTF8 = {
   encode: function (source) {
@@ -113,7 +113,7 @@ codecs.LIST = {
 
 codecs.TUPLE = shortlex(codecs.LIST)
 
-// member order is preserved and matters in collation, just like couchdb
+// member order is preserved and accounted for in collation (like in couchdb)
 codecs.HASH = {
   encode: util.encodeHash,
   decode: util.decodeHash

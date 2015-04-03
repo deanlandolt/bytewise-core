@@ -1,5 +1,3 @@
-'use strict'
-
 var assert = require('assert')
 var bops = require('bops')
 var base = require('./base')
@@ -47,46 +45,45 @@ bytewise.encode = function(source) {
   //
   // check for invalid/incomparable values
   //
-  assert.equal(base.incomparable.is(source), false, 'Invalid value')
+  assert.equal(base.invalid(source), false, 'Invalid value')
 
   //
   // encode boundary types
   //
-  var types = base.boundary.types
-  var type
-  for (var key in types) {
-    type = types[key]
-    if (type.is(source))
-      return serialize(type, source)
-  }
+  if (base.boundary.HIGH.is(source))
+    return serialize(base.boundary.HIGH, source)
+
+  if (base.boundary.LOW.is(source))
+    return serialize(base.boundary.LOW, source)
 
   //
-  // encode standard value types
+  // encode standard value-typed sorts
   //
-  types = base.types
+  var sorts = base.sorts
   var order = base.order
+  var sort
   for (var i = 0, length = order.length; i < length; ++i) {
-    type = types[order[i]]
+    sort = sorts[order[i]]
 
-    if (type.is(source)) {
+    if (sort.is(source)) {
       //
-      // loop over any subtypes defined on type
+      // loop over any subsorts defined on sort
       //
-      var subtypes = type.subtypes ||  { '': type } // TODO: clean up
-      for (key in subtypes) {
-        var subtype = subtypes[key]
-        if (subtype.is(source)) 
-          return serialize(subtype, source)
+      var subsorts = sort.subtypes ||  { '': sort } // TODO: clean up
+      for (key in subsorts) {
+        var subsort = subsorts[key]
+        if (subsort.is(source)) 
+          return serialize(subsort, source)
       }
       //
-      // source is an unsupported subtype
+      // source is an unsupported subsort
       //
-      assert.fail(source, type, 'Unsupported subtype value')
+      assert.fail(source, sort, 'Unsupported sort value')
     }
   }
 
   //
-  // no type descriptor found
+  // no sort descriptor found
   //
   assert.fail(source, null, 'Unknown value')
 }
@@ -102,56 +99,67 @@ bytewise.decode = function (buffer) {
     buffer = bytewise.stringCodec.encode(buffer)
 
   var prefix = buffer[0];
-  var type = bytewise.getType(prefix)
+  var sort = bytewise.getSort(prefix)
 
-  assert.ok(type, 'Invalid encoding: ' + buffer)
+  assert.ok(sort, 'Invalid encoding: ' + buffer)
 
   //
-  // if type provides a decoder it is passed the base type system as second arg
+  // if sort provides a decoder it is passed the base type system as second arg
   //
-  var codec = type.codec
+  var codec = sort.codec
   if (codec)
     return codec.decode(bops.subarray(buffer, 1), bytewise)
 
   //
-  // nullary types without a codec must provide a value for their decoded form
+  // nullary sorts without a codec must provide a value for their decoded form
   //
-  assert('value' in type, 'Unsupported encoding')
-  return type.value
+  assert('value' in sort, 'Unsupported encoding')
+  return sort.value
 }
 
-var PREFIX_MAP
+var SORT_REGISTRY
 
-function addPrefixes(target, types) {
-  var key, type, prefix
-  for (key in types) {
-    type = types[key]
-    prefix = type && type.prefix
-    if (prefix) {
-      if (prefix in target)
-        assert.strictEqual(type, target[prefix], 'Duplicate prefix: ' + prefix)
+function registerSort(sort) {
+  var prefix = sort && sort.prefix
+  if (!prefix)
+    return
+  if (prefix in SORT_REGISTRY)
+    assert.deepEqual(sort, SORT_REGISTRY[prefix], 'Duplicate prefix: ' + prefix)
 
-      target[type.prefix] = type
-    }
+  SORT_REGISTRY[sort.prefix] = sort
+}
+
+function registerSorts(sorts) {
+  for (var key in sorts) {
+    registerSort(sorts[key])
   }
 }
 
-bytewise.getType = function (prefix) {
+bytewise.getSort = function (prefix) {
   //
-  // memoize prefix map on first run
+  // memoize byte prefixes on first run
   //
-  if (!PREFIX_MAP) {
-    PREFIX_MAP = {}
-    addPrefixes(PREFIX_MAP, base.boundary.types)
-    var types = base.types
-    var type
-    for (var key in types) {
-      type = types[key]
-      addPrefixes(PREFIX_MAP, type.subtypes || { '': type })
+  if (!SORT_REGISTRY) {
+    SORT_REGISTRY = {}
+
+    //
+    // register boundary types
+    //
+    registerSort(base.boundary.HIGH)
+    registerSort(base.boundary.LOW)
+
+    var sorts = base.sorts
+    var sort
+    for (var key in sorts) {
+      sort = sorts[key]
+      if (sort.subtypes)
+        registerSorts(sort.subtypes)
+      else
+        registerSort(sort)
     }
   }
 
-  return PREFIX_MAP[prefix]
+  return SORT_REGISTRY[prefix]
 }
 
 bytewise.buffer = true
@@ -161,6 +169,6 @@ bytewise.type = 'bytewise-core'
 //
 // expose type information
 //
-bytewise.types = base.types
+bytewise.sorts = base.sorts
 bytewise.compare = base.compare
 bytewise.equal = base.equal
