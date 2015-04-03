@@ -5,17 +5,8 @@ var codecs = require('./util/codecs')
 // extend core sorts defined by typewise with bytewise-specific functionality
 //
 
-function _thisValue(source) {
-  return source === this.value
-}
-
 // prefix represents byte tag prefix in encoding, enforces binary total order
 // type tag is 1 byte, which gives us plenty of room to grow
-// we leave some space between the various sorts for possible future extensions
-
-// value types without a `codec` property are nullary
-// a `codec` should contain an encode and decode function
-// a `codec` may also contain a `length` value indicating a fixed encoding size
 
 //
 // boundary types
@@ -28,77 +19,85 @@ base.boundary.LOW.prefix = 0xff
 //
 var sorts = base.sorts
 
+//
+// helper for defining nullary types
+//
+function nullary(config) {
+  config.is = function (instance) {
+    return instance === this.value
+  }
+  return config
+}
+
 sorts.UNDEFINED.prefix = 0xf0
 sorts.UNDEFINED.value = void 0
+nullary(sorts.UNDEFINED)
 
 sorts.NULL.prefix = 0x10
 sorts.NULL.value = null
+nullary(sorts.NULL)
 
-sorts.BOOLEAN.subtypes = {
-  TRUE: {
+sorts.BOOLEAN.sorts = {
+  TRUE: nullary({
     prefix: 0x21,
-    value: true,
-    is: _thisValue
-  },
-  FALSE: {
+    value: true
+  }),
+  FALSE: nullary({
     prefix: 0x20,
-    value: false,
-    is: _thisValue
-  }
+    value: false
+  })
 }
 
 sorts.BOOLEAN.boundary = {
-  LOW: sorts.BOOLEAN.subtypes.FALSE,
-  HIGH: sorts.BOOLEAN.subtypes.TRUE
+  LOW: sorts.BOOLEAN.sorts.FALSE,
+  HIGH: sorts.BOOLEAN.sorts.TRUE
 }
 
-sorts.NUMBER.subtypes = {
-  POSITIVE_INFINITY: {
+sorts.NUMBER.sorts = {
+  POSITIVE_INFINITY: nullary({
     prefix: 0x43,
-    value: Number.POSITIVE_INFINITY,
-    is: _thisValue
-  },
-  NEGATIVE_INFINITY: {
+    value: Number.POSITIVE_INFINITY
+  }),
+  NEGATIVE_INFINITY: nullary({
     prefix: 0x40,
-    value: Number.NEGATIVE_INFINITY,
-    is: _thisValue
-  },
+    value: Number.NEGATIVE_INFINITY
+  }),
   POSITIVE: {
     prefix: 0x42,
     codec: codecs.POSITIVE_FLOAT,
-    is: function (source) {
-      return source >= 0
+    is: function (instance) {
+      return instance >= 0
     }
   },
   NEGATIVE: {
     prefix: 0x41,
     codec: codecs.NEGATIVE_FLOAT,
-    is: function (source) {
-      return source < 0
+    is: function (instance) {
+      return instance < 0
     }
   }
 }
 
-sorts.BOOLEAN.boundary = {
-  LOW: sorts.NUMBER.subtypes.NEGATIVE_INFINITY,
-  HIGH: sorts.NUMBER.subtypes.POSITIVE_INFINITY
+sorts.NUMBER.boundary = {
+  LOW: sorts.NUMBER.sorts.NEGATIVE_INFINITY,
+  HIGH: sorts.NUMBER.sorts.POSITIVE_INFINITY
 }
 
-sorts.DATE.subtypes = {
+sorts.DATE.sorts = {
   POST_EPOCH: {
     prefix: 0x52,
     // packed identically to a positive numbers
     codec: codecs.POST_EPOCH_DATE,
-    is: function (source) {
-      return source.valueOf() >= 0
+    is: function (instance) {
+      return instance.valueOf() >= 0
     }
   },
   PRE_EPOCH: {
     prefix: 0x51,
     // packed identically to a negative numbers
     codec: codecs.PRE_EPOCH_DATE,
-    is: function (source) {
-      return source.valueOf() < 0
+    is: function (instance) {
+      return instance.valueOf() < 0
     }
   }
 }

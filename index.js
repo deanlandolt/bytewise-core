@@ -69,7 +69,7 @@ bytewise.encode = function(source) {
       //
       // loop over any subsorts defined on sort
       //
-      var subsorts = sort.subtypes ||  { '': sort } // TODO: clean up
+      var subsorts = sort.sorts ||  { '': sort } // TODO: clean up
       for (key in subsorts) {
         var subsort = subsorts[key]
         if (subsort.is(source)) 
@@ -152,8 +152,11 @@ bytewise.getSort = function (prefix) {
     var sort
     for (var key in sorts) {
       sort = sorts[key]
-      if (sort.subtypes)
-        registerSorts(sort.subtypes)
+      //
+      // if sort has subsorts, register these instead
+      //
+      if (sort.sorts)
+        registerSorts(sort.sorts)
       else
         registerSort(sort)
     }
