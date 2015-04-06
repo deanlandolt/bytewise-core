@@ -22,19 +22,19 @@ function patchBuffer(buffer) {
 }
 
 //
-// generate a buffer with type prefix from source value
+// generate a buffer with type's byte prefix from source value
 //
 function serialize(type, source) {
-  var prefix = type.prefix
-  assert.ok(prefix >= 0 && prefix < 256, 'Invalid type prefix: ' + prefix)
+  var byte = type.byte
+  assert.ok(byte >= 0 && byte < 256, 'Invalid type byte prefix: ' + byte)
 
   var codec = type.codec
   if (!codec)
-    return patchBuffer(bops.from([ prefix ]))
+    return patchBuffer(bops.from([ byte ]))
 
   var buffer = codec.encode(source, bytewise)
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
-  return patchBuffer(bops.join([ bops.from([ prefix ]), buffer ], hint))
+  return patchBuffer(bops.join([ bops.from([ byte ]), buffer ], hint))
 
 }
 
@@ -50,11 +50,11 @@ bytewise.encode = function(source) {
   //
   // encode boundary types
   //
-  if (base.boundary.HIGH.is(source))
-    return serialize(base.boundary.HIGH, source)
+  if (base.boundary.max.is(source))
+    return serialize(base.boundary.max, source)
 
-  if (base.boundary.LOW.is(source))
-    return serialize(base.boundary.LOW, source)
+  if (base.boundary.min.is(source))
+    return serialize(base.boundary.min, source)
 
   //
   // encode standard value-typed sorts
@@ -83,7 +83,7 @@ bytewise.encode = function(source) {
   }
 
   //
-  // no sort descriptor found
+  // no type descriptor found
   //
   assert.fail(source, null, 'Unknown value')
 }
@@ -98,71 +98,81 @@ bytewise.decode = function (buffer) {
   if (typeof buffer === 'string')
     buffer = bytewise.stringCodec.encode(buffer)
 
-  var prefix = buffer[0];
-  var sort = bytewise.getSort(prefix)
+  var byte = buffer[0];
+  var type = bytewise.getType(byte)
 
-  assert.ok(sort, 'Invalid encoding: ' + buffer)
+  assert.ok(type, 'Invalid encoding: ' + buffer)
 
   //
-  // if sort provides a decoder it is passed the base type system as second arg
+  // if type provides a decoder it is passed the base type system as second arg
   //
-  var codec = sort.codec
+  var codec = type.codec
   if (codec)
     return codec.decode(bops.subarray(buffer, 1), bytewise)
 
   //
-  // nullary sorts without a codec must provide a value for their decoded form
+  // nullary types without a codec must provide a value for their decoded form
   //
-  assert('value' in sort, 'Unsupported encoding')
-  return sort.value
+  assert('value' in type, 'Unsupported encoding')
+  return type.value
 }
 
-var SORT_REGISTRY
+//
+// registry for various encoding types
+//
+var TYPE_REGISTRY
 
-function registerSort(sort) {
-  var prefix = sort && sort.prefix
-  if (!prefix)
+function registerType(type) {
+  var byte = type && type.byte
+  if (!byte)
     return
-  if (prefix in SORT_REGISTRY)
-    assert.deepEqual(sort, SORT_REGISTRY[prefix], 'Duplicate prefix: ' + prefix)
 
-  SORT_REGISTRY[sort.prefix] = sort
+  if (byte in TYPE_REGISTRY)
+    assert.deepEqual(type, TYPE_REGISTRY[byte], 'Duplicate byte prefix: ' + byte)
+
+  TYPE_REGISTRY[type.byte] = type
 }
 
-function registerSorts(sorts) {
-  for (var key in sorts) {
-    registerSort(sorts[key])
+function registerTypes(types) {
+  for (var key in types) {
+    registerType(types[key])
   }
 }
 
-bytewise.getSort = function (prefix) {
+//
+// look up type descriptor associated with a given byte prefix
+//
+bytewise.getType = function (byte) {
   //
-  // memoize byte prefixes on first run
+  // construct and memoize byte prefix registry on first run
   //
-  if (!SORT_REGISTRY) {
-    SORT_REGISTRY = {}
+  if (!TYPE_REGISTRY) {
+    TYPE_REGISTRY = {}
 
     //
     // register boundary types
     //
-    registerSort(base.boundary.HIGH)
-    registerSort(base.boundary.LOW)
+    registerType(base.boundary.max)
+    registerType(base.boundary.min)
 
+    //
+    // register sorts
+    //
     var sorts = base.sorts
     var sort
     for (var key in sorts) {
       sort = sorts[key]
       //
-      // if sort has subsorts, register these instead
+      // if sort has subsorts register these instead
       //
       if (sort.sorts)
-        registerSorts(sort.sorts)
+        registerTypes(sort.sorts)
       else
-        registerSort(sort)
+        registerType(sort)
     }
   }
 
-  return SORT_REGISTRY[prefix]
+  return TYPE_REGISTRY[byte]
 }
 
 bytewise.buffer = true

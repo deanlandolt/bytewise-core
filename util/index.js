@@ -108,7 +108,7 @@ util.encodeList = function (source, base) {
 
   for (var i = 0, end = source.length; i < end; ++i) {
     var buffer = base.encode(source[i])
-    var sort = base.getSort(buffer[0])
+    var sort = base.getType(buffer[0])
     assert.ok(sort, 'List encoding failure: ' + buffer)
 
     //
@@ -172,7 +172,7 @@ util.parse = function (buffer, base, sort) {
   // nullary
   //
   if (sort && !codec) 
-    return [ base.decode(bops.from([ sort.prefix ])), 0 ]
+    return [ base.decode(bops.from([ sort.byte ])), 0 ]
 
   //
   // custom parse implementation provided by sort
@@ -212,7 +212,7 @@ util.parse = function (buffer, base, sort) {
   var list = []
   var next
   while ((next = buffer[index]) !== 0x00) {
-    sort = base.getSort(next)
+    sort = base.getType(next)
     var result = util.parse(bops.subarray(buffer, index + 1), base, sort)
     list.push(result[0])
 

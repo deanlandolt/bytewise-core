@@ -1,4 +1,3 @@
-
 var bytewise = require('../');
 var typewise = require('typewise-core');
 var util = require('typewise-core/test/util');
