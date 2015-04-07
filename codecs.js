@@ -1,5 +1,5 @@
 var bops = require('bops')
-var util = require('./')
+var util = require('./util')
 
 var FLOAT_LENGTH = 8
 

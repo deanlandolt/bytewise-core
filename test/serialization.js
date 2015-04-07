@@ -1,5 +1,3 @@
-'use strict'
-
 var bytewise = require('../')
 var util = require('typewise-core/test/util')
 var tape = require('tape')

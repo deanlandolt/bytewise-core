@@ -1,5 +1,5 @@
 var base = require('typewise-core/base')
-var codecs = require('./util/codecs')
+var codecs = require('./codecs')
 
 //
 // extend core sorts defined by typewise with bytewise-specific functionality
@@ -31,8 +31,8 @@ function nullary(config, value) {
   return config
 }
 
-sorts.undefined.byte = 0xf0
-nullary(sorts.undefined)
+sorts.void.byte = 0xf0
+nullary(sorts.void)
 
 sorts.null.byte = 0x10
 nullary(sorts.null, null)

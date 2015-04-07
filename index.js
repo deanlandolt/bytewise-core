@@ -1,7 +1,7 @@
 var assert = require('assert')
 var bops = require('bops')
 var base = require('./base')
-var codecs = require('./util/codecs')
+var codecs = require('./codecs')
 
 var bytewise = exports
 
@@ -118,19 +118,19 @@ bytewise.decode = function (buffer) {
 }
 
 //
-// registry for various encoding types
+// registry mapping byte prefixes to type descriptors
 //
-var TYPE_REGISTRY
+var PREFIX_REGISTRY
 
 function registerType(type) {
   var byte = type && type.byte
   if (!byte)
     return
 
-  if (byte in TYPE_REGISTRY)
-    assert.deepEqual(type, TYPE_REGISTRY[byte], 'Duplicate byte prefix: ' + byte)
+  if (byte in PREFIX_REGISTRY)
+    assert.deepEqual(type, PREFIX_REGISTRY[byte], 'Duplicate prefix: ' + byte)
 
-  TYPE_REGISTRY[type.byte] = type
+  PREFIX_REGISTRY[type.byte] = type
 }
 
 function registerTypes(types) {
@@ -146,8 +146,8 @@ bytewise.getType = function (byte) {
   //
   // construct and memoize byte prefix registry on first run
   //
-  if (!TYPE_REGISTRY) {
-    TYPE_REGISTRY = {}
+  if (!PREFIX_REGISTRY) {
+    PREFIX_REGISTRY = {}
 
     //
     // register boundary types
@@ -172,7 +172,7 @@ bytewise.getType = function (byte) {
     }
   }
 
-  return TYPE_REGISTRY[byte]
+  return PREFIX_REGISTRY[byte]
 }
 
 bytewise.buffer = true

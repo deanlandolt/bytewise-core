@@ -171,7 +171,7 @@ util.parse = function (buffer, base, sort) {
   //
   // nullary
   //
-  if (sort && !codec) 
+  if (sort && !codec)
     return [ base.decode(bops.from([ sort.byte ])), 0 ]
 
   //
