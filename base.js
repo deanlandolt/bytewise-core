@@ -11,116 +11,66 @@ var codecs = require('./codecs')
 //
 // boundary types
 //
-base.boundary.max.byte = 0x00
-base.boundary.min.byte = 0xff
+base.bound.upper.byte = 0x00
+base.bound.lower.byte = 0xff
 
 //
 // value types
 //
 var sorts = base.sorts
 
-//
-// helper for defining nullary types
-//
-function nullary(config, value) {
-  config.is = function (instance) {
-    return instance === this.value
-  }
-
-  config.value = value
-  return config
-}
-
 sorts.void.byte = 0xf0
-nullary(sorts.void)
 
 sorts.null.byte = 0x10
-nullary(sorts.null, null)
 
-sorts.boolean.sorts = {
-  true: nullary({ byte: 0x21 }, true),
-  false: nullary({ byte: 0x20 }, false)
-}
+sorts.boolean.sorts.false.byte = 0x20
+sorts.boolean.sorts.true.byte = 0x21
 
-sorts.boolean.boundary = {
-  min: sorts.boolean.sorts.false,
-  max: sorts.boolean.sorts.true
-}
 
-sorts.number.sorts = {
-  positiveInfinity: nullary({ byte: 0x43 }, Number.POSITIVE_INFINITY),
-  negativeInfinity: nullary({ byte: 0x40 }, Number.NEGATIVE_INFINITY),
-  positive: {
-    byte: 0x42,
-    codec: codecs.POSITIVE_FLOAT,
-    is: function (instance) {
-      return instance >= 0
-    }
-  },
-  negative: {
-    byte: 0x41,
-    codec: codecs.NEGATIVE_FLOAT,
-    is: function (instance) {
-      return instance < 0
-    }
-  }
-}
+var NUMBER = sorts.number
 
-sorts.number.boundary = {
-  min: sorts.number.sorts.NEGATIVE_INFINITY,
-  max: sorts.number.sorts.POSITIVE_INFINITY
-}
+NUMBER.sorts.min.byte = 0x40
+NUMBER.sorts.negative.byte = 0x41
+NUMBER.sorts.positive.byte = 0x42
+NUMBER.sorts.max.byte = 0x43
 
-sorts.date.sorts = {
-  postEpoch: {
-    byte: 0x52,
-    // packed identically to a positive numbers
-    codec: codecs.POST_EPOCH_DATE,
-    is: function (instance) {
-      return instance.valueOf() >= 0
-    }
-  },
-  preEpoch: {
-    byte: 0x51,
-    // packed identically to a negative numbers
-    codec: codecs.PRE_EPOCH_DATE,
-    is: function (instance) {
-      return instance.valueOf() < 0
-    }
-  }
-}
+NUMBER.sorts.negative.codec = codecs.NEGATIVE_FLOAT
+NUMBER.sorts.positive.codec = codecs.POSITIVE_FLOAT
 
-sorts.date.boundary = {
-  min: { byte: 0x50 },
-  max: { byte: 0x53 }
-}
 
-sorts.binary.byte = 0x60
-sorts.binary.codec = codecs.UINT8
+var DATE = sorts.date
 
-sorts.binary.boundary = {
-  max: { byte: 0x61 },
-}
+DATE.sorts.negative.byte = 0x51
+DATE.sorts.positive.byte = 0x52
+DATE.sorts.negative.codec = codecs.PRE_EPOCH_DATE
+DATE.sorts.positive.codec = codecs.POST_EPOCH_DATE
 
-sorts.string.byte = 0x70
-sorts.string.codec = codecs.UTF8
+DATE.bound.lower.byte = 0x50
+DATE.bound.upper.byte = 0x53
 
-sorts.string.boundary = {
-  max: { byte: 0x71 },
-}
 
-sorts.array.byte = 0xa0
-sorts.array.codec = codecs.LIST
+var BINARY = sorts.binary
+BINARY.byte = 0x60
+BINARY.codec = codecs.UINT8
+BINARY.bound.upper = 0x61
 
-sorts.array.boundary = {
-  max: { byte: 0xa1 },
-}
 
-sorts.object.byte = 0xb0
-sorts.object.codec = codecs.HASH
+var STRING = sorts.string
+STRING.byte = 0x70
+STRING.codec = codecs.UTF8
+STRING.bound.upper.byte = 0x71
 
-sorts.object.boundary = {
-  max: { byte: 0xb1 },
-}
+
+var ARRAY = sorts.array
+ARRAY.byte = 0xa0
+ARRAY.codec = codecs.LIST
+ARRAY.bound.upper.byte = 0xa1
+
+
+var OBJECT = sorts.object
+OBJECT.byte = 0xb0
+OBJECT.codec = codecs.HASH
+
+OBJECT.bound.upper.byte = 0xb1
 
 module.exports = base

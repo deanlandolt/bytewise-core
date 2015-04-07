@@ -50,11 +50,11 @@ bytewise.encode = function(source) {
   //
   // encode boundary types
   //
-  if (base.boundary.max.is(source))
-    return serialize(base.boundary.max, source)
+  if (base.bound.upper.is(source))
+    return serialize(base.bound.upper, source)
 
-  if (base.boundary.min.is(source))
-    return serialize(base.boundary.min, source)
+  if (base.bound.lower.is(source))
+    return serialize(base.bound.lower, source)
 
   //
   // encode standard value-typed sorts
@@ -113,7 +113,7 @@ bytewise.decode = function (buffer) {
   //
   // nullary types without a codec must provide a value for their decoded form
   //
-  assert('value' in type, 'Unsupported encoding')
+  assert('value' in type, 'Unsupported encoding: ' + buffer)
   return type.value
 }
 
@@ -152,8 +152,8 @@ bytewise.getType = function (byte) {
     //
     // register boundary types
     //
-    registerType(base.boundary.max)
-    registerType(base.boundary.min)
+    registerType(base.bound.upper)
+    registerType(base.bound.lower)
 
     //
     // register sorts
