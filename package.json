@@ -1,16 +1,10 @@
 {
   "name": "bytewise-core",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Binary serialization of arbitrarily complex structures that sort element-wise",
   "main": "index.js",
-  "dependencies": {
-    "typewise-core": "^1.1.0"
-  },
-  "devDependencies": {
-    "tape": "~1.0"
-  },
   "scripts": {
-    "test": "tape test"
+    "test": "tape test | faucet"
   },
   "repository": {
     "type": "git",
@@ -30,5 +24,11 @@
     "url": "https://github.com/deanlandolt/bytewise/issues"
   },
   "homepage": "https://github.com/deanlandolt/bytewise-core",
-  "readmeFilename": "README.md"
+  "dependencies": {
+    "typewise-core": "^1.1"
+  },
+  "devDependencies": {
+    "faucet": "0.0.1",
+    "tape": "^1.0"
+  }
 }
