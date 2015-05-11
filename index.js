@@ -4,22 +4,6 @@ var codecs = require('./codecs')
 
 var bytewise = exports
 
-
-// TODO: how to subclass Buffer via browserify?
-function patchBuffer(buffer) {
-  //
-  // override buffer string decoding when no encoding explicitly specified
-  //
-  buffer.toString = function (encoding) {
-    if (!encoding)
-      return bytewise.stringCodec.decode(buffer)
-
-    return Buffer.prototype.toString.apply(buffer, arguments)
-  }
-
-  return buffer
-}
-
 //
 // generate a buffer with type's byte prefix from source value
 //
@@ -29,11 +13,11 @@ function serialize(type, source) {
 
   var codec = type.codec
   if (!codec)
-    return patchBuffer(new Buffer([ byte ]))
+    return bytewise.postEncode(new Buffer([ byte ]))
 
   var buffer = codec.encode(source, bytewise)
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
-  return patchBuffer(Buffer.concat([ new Buffer([ byte ]), buffer ], hint))
+  return bytewise.postEncode(Buffer.concat([ new Buffer([ byte ]), buffer ], hint))
 
 }
 
@@ -107,14 +91,41 @@ bytewise.decode = function (buffer) {
   //
   var codec = type.codec
   if (codec)
-    return codec.decode(buffer.slice(1), bytewise)
+    return bytewise.postDecode(codec.decode(buffer.slice(1), bytewise))
 
   //
   // nullary types without a codec must provide a value for their decoded form
   //
   assert('value' in type, 'Unsupported encoding: ' + buffer)
-  return type.value
+  return bytewise.postDecode(type.value)
 }
+
+
+//
+// invoked after encoding with encoded buffer instance
+//
+bytewise.postEncode = function (buffer) {
+
+  //
+  // override buffer string decoding to hex by default to help coercion issues
+  //
+  buffer.toString = function (encoding) {
+    if (!encoding)
+      return bytewise.stringCodec.decode(buffer)
+
+    return Buffer.prototype.toString.apply(buffer, arguments)
+  }
+
+  return buffer
+}
+
+//
+// invoked after decoding with decoded value
+//
+bytewise.postDecode = function (value) {
+  return value
+}
+
 
 //
 // registry mapping byte prefixes to type descriptors
