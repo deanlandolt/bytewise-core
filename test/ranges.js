@@ -36,7 +36,6 @@ tape('lower bound in array', function (t) {
 
 tape('upper bound in array', function (t) {
   var range = [ 'foo', bytewise.bound.upper ]
-  console.warn(bytewise.encode(range))
   decodeThrows(t, range)
   t.end()
 })
