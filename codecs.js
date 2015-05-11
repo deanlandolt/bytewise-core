@@ -104,7 +104,9 @@ codecs.PRE_EPOCH_DATE = {
   }
 }
 
+//
 // base encoding for complex structures
+//
 codecs.LIST = {
   encode: util.encodeList,
   decode: util.decodeList
@@ -112,10 +114,13 @@ codecs.LIST = {
 
 codecs.TUPLE = shortlex(codecs.LIST)
 
-// member order is preserved and accounted for in collation (like in couchdb)
+//
+// member order is preserved and accounted for in sort (except for number keys)
+//
 codecs.HASH = {
-  encode: util.encodeHash,
-  decode: util.decodeHash
+  // TODO
+  // encode: util.encodeHash,
+  // decode: util.decodeHash
 }
 
 codecs.RECORD = shortlex(codecs.HASH)

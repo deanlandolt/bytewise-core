@@ -2,7 +2,7 @@ var bytewise = require('../')
 var util = require('typewise-core/test/util')
 var tape = require('tape')
 
-var sample, shuffled;
+var sample, shuffled
 
 function eq(t, a, b) {
   t.equal(a.length, b.length)
@@ -17,7 +17,7 @@ function eq(t, a, b) {
       console.log('not equal:', a[i])
       console.log('expected :', b[i])
     }
-  });
+  })
 }
 
 tape('equal', function (t) {
@@ -31,14 +31,14 @@ tape('equal', function (t) {
       .map(bytewise.decode)
   )
 
-  sample = util.getArraySample(2);
+  sample = util.getArraySample(2)
   shuffled = util.shuffle(sample.slice())
   eq(t, sample,
     shuffled.map(bytewise.encode).sort(bytewise.compare).map(bytewise.decode)
   )
   sample = util.shuffle(sample.slice())
   t.end()
-});
+})
 
 var hash = {
   start: true,

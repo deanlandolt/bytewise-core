@@ -1,6 +1,6 @@
 var bytewise = require('../')
 var util = require('typewise-core/test/util')
-var tape = require('tape')
+var tape = module.exports = require('tape')
 
 function eqHex(t, data, hex) {
   t.equal(bytewise.encode(data).toString('hex'), hex)

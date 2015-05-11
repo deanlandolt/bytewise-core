@@ -97,7 +97,7 @@ bytewise.decode = function (buffer) {
   if (typeof buffer === 'string')
     buffer = bytewise.stringCodec.encode(buffer)
 
-  var byte = buffer[0];
+  var byte = buffer[0]
   var type = bytewise.getType(byte)
 
   assert.ok(type, 'Invalid encoding: ' + buffer)

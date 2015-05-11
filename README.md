@@ -23,10 +23,9 @@ This is the top level order of the various structures that may be encoded:
 * `Buffer`, `Uint8Array` (bit-wise)
 * `String` (character-wise)
 * `Array` (element-wise)
-* `Object` (element-wise,  key/value pairs)
 * `undefined`
 
-Structured types like `Array` and `Object` may contain any supported structures, including nested `Array` or `Object` values.
+Structured types like `Array` may recursively contain any other supported structures.
 
 
 ## Usage
