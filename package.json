@@ -1,6 +1,6 @@
 {
   "name": "bytewise-core",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Binary serialization of arbitrarily complex structures that sort element-wise",
   "main": "index.js",
   "scripts": {
