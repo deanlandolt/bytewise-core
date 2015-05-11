@@ -1,4 +1,3 @@
-var bops = require('bops')
 var util = require('./util')
 
 var FLOAT_LENGTH = 8
@@ -13,14 +12,14 @@ function shortlexEncode(codec) {
     // TODO: allow length getter to be provided
     var length = util.encodeFloat(source.length)
     var body = codec.encode(source, base)
-    return bops.join([ length, body ])
+    return Buffer.concat([ length, body ])
   }
 }
 
 function shortlexDecode(codec) {
   return function (buffer) {
     // stupid lazy implementation
-    return codec.decode(this, bops.subarray(buffer, FLOAT_LENGTH))
+    return codec.decode(this, buffer.slice(FLOAT_LENGTH))
   }
 }
 
@@ -46,10 +45,10 @@ var codecs = exports
 
 codecs.HEX = {
   encode: function (source) {
-    return bops.from(source, 'hex')
+    return new Buffer(source, 'hex')
   },
   decode: function (buffer) {
-    return bops.to(buffer, 'hex')
+    return buffer.toString('hex')
   }
 }
 
@@ -64,10 +63,10 @@ codecs.UINT8_SHORTLEX = shortlex(codecs.UINT8)
 
 codecs.UTF8 = {
   encode: function (source) {
-    return bops.from(source, 'utf8')
+    return new Buffer(source, 'utf8')
   },
   decode: function (buffer) {
-    return bops.to(buffer, 'utf8')
+    return buffer.toString('utf8')
   },
   escape: util.escapeFlat,
   unescape: util.unescapeFlat

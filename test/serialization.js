@@ -1,7 +1,6 @@
 var bytewise = require('../')
 var util = require('typewise-core/test/util')
 var tape = require('tape')
-var bops = require('bops')
 
 var sample, shuffled;
 
@@ -9,8 +8,8 @@ function eq(t, a, b) {
   t.equal(a.length, b.length)
   a.forEach(function (_, i) {
     var y = b[i]
-    var _a = bops.to(bytewise.encode(a[i]), 'hex')
-    var _b = bops.to(bytewise.encode(b[i]), 'hex')
+    var _a = bytewise.encode(a[i]).toString('hex')
+    var _b = bytewise.encode(b[i]).toString('hex')
     
     t.equal(_a, _b)
 
@@ -52,5 +51,13 @@ var hash = {
 
 tape('simple equal', function (t) {
   eq(t, sample, bytewise.decode(bytewise.encode(sample)))
+  t.end()
+})
+
+tape('encoded buffer toStrings to hex by default', function (t) {
+  var encoded = bytewise.encode(sample)
+  t.equal('' + encoded, encoded.toString('hex'))
+  t.equal(new Buffer(encoded).toString(), encoded.toString('utf8'))
+  t.equal(encoded.toString('ascii'), new Buffer(encoded.toString('hex'), 'hex').toString('ascii'))
   t.end()
 })

@@ -1,12 +1,11 @@
 var assert = require('assert')
-var bops = require('bops')
 var base = require('./base')
 var codecs = require('./codecs')
 
 var bytewise = exports
 
 
-// TODO: figure out how to do proper subclassing with bops
+// TODO: how to subclass Buffer via browserify?
 function patchBuffer(buffer) {
   //
   // override buffer string decoding when no encoding explicitly specified
@@ -30,11 +29,11 @@ function serialize(type, source) {
 
   var codec = type.codec
   if (!codec)
-    return patchBuffer(bops.from([ byte ]))
+    return patchBuffer(new Buffer([ byte ]))
 
   var buffer = codec.encode(source, bytewise)
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
-  return patchBuffer(bops.join([ bops.from([ byte ]), buffer ], hint))
+  return patchBuffer(Buffer.concat([ new Buffer([ byte ]), buffer ], hint))
 
 }
 
@@ -108,7 +107,7 @@ bytewise.decode = function (buffer) {
   //
   var codec = type.codec
   if (codec)
-    return codec.decode(bops.subarray(buffer, 1), bytewise)
+    return codec.decode(buffer.slice(1), bytewise)
 
   //
   // nullary types without a codec must provide a value for their decoded form
@@ -124,7 +123,7 @@ var PREFIX_REGISTRY
 
 function registerType(type) {
   var byte = type && type.byte
-  if (!byte)
+  if (byte == null)
     return
 
   if (byte in PREFIX_REGISTRY)

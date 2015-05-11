@@ -1,5 +1,4 @@
 var assert = require('assert')
-var bops = require('bops')
 
 var util = exports
 
@@ -11,23 +10,23 @@ util.invertBytes = function (buffer) {
     bytes.push(~buffer[i])
   }
 
-  return bops.from(bytes)
+  return new Buffer(bytes)
 }
 
 util.encodeFloat = function (value) {
-  var buffer = bops.create(FLOAT_LENGTH)
+  var buffer = new Buffer(FLOAT_LENGTH)
   if (value < 0) {
     //
-    // write negative numbers as positive values with the byte inverted
+    // write negative numbers as negated positive values to invert bytes
     //
-    bops.writeDoubleBE(buffer, -value.valueOf(), 0)
+    buffer.writeDoubleBE(-value.valueOf(), 0)
     return util.invertBytes(buffer)
   }
 
   //
   // normalize -0 values to 0
   //
-  bops.writeDoubleBE(buffer, value.valueOf() || 0, 0)
+  buffer.writeDoubleBE(value.valueOf() || 0, 0)
   return buffer
 }
 
@@ -37,7 +36,7 @@ util.decodeFloat = function (buffer, base, negative) {
   if (negative)
     buffer = util.invertBytes(buffer)
 
-  var value = bops.readDoubleBE(buffer, 0)
+  var value = buffer.readDoubleBE(0)
   return negative ? -value : value
 }
 
@@ -72,7 +71,7 @@ util.escapeFlat = function (buffer) {
   // add end byte
   //
   bytes.push(0x00)
-  return bops.from(bytes)
+  return new Buffer(bytes)
 }
 
 util.unescapeFlat = function (buffer) {
@@ -99,7 +98,7 @@ util.unescapeFlat = function (buffer) {
     else
       bytes.push(b)
   }
-  return bops.from(bytes)
+  return new Buffer(bytes)
 }
 
 util.encodeList = function (source, base) {
@@ -124,8 +123,8 @@ util.encodeList = function (source, base) {
   //
   // close the list with an end byte
   //
-  buffers.push(bops.from([ 0x00 ]))
-  return bops.join(buffers)
+  buffers.push(new Buffer([ 0x00 ]))
+  return Buffer.concat(buffers)
 }
 
 util.decodeList = function (buffer, base) {
@@ -172,7 +171,7 @@ util.parse = function (buffer, base, sort) {
   // nullary
   //
   if (sort && !codec)
-    return [ base.decode(bops.from([ sort.byte ])), 0 ]
+    return [ base.decode(new Buffer([ sort.byte ])), 0 ]
 
   //
   // custom parse implementation provided by sort
@@ -185,7 +184,7 @@ util.parse = function (buffer, base, sort) {
   //
   var length = codec && codec.length
   if (typeof length === 'number')
-    return [ codec.decode(bops.subarray(buffer, 0, length)), length ]
+    return [ codec.decode(buffer.slice(0, length)), length ]
 
   //
   // escaped sort, seek to end byte and unescape
@@ -197,7 +196,7 @@ util.parse = function (buffer, base, sort) {
     }
 
     assert(index < buffer.length, 'No closing byte found for sequence')
-    var unescaped = codec.unescape(bops.subarray(buffer, 0, index))
+    var unescaped = codec.unescape(buffer.slice(0, index))
 
     //
     // add 1 to index to account for closing tag byte
@@ -213,7 +212,7 @@ util.parse = function (buffer, base, sort) {
   var next
   while ((next = buffer[index]) !== 0x00) {
     sort = base.getType(next)
-    var result = util.parse(bops.subarray(buffer, index + 1), base, sort)
+    var result = util.parse(buffer.slice(index + 1), base, sort)
     list.push(result[0])
 
     //

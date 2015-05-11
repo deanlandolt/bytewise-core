@@ -2,7 +2,6 @@ var bytewise = require('../');
 var typewise = require('typewise-core');
 var util = require('typewise-core/test/util');
 var test = require('tape');
-var bops = require('bops');
 
 var expected = [
   -4,
@@ -36,8 +35,8 @@ var shuffled = util.shuffle(expected.slice());
 
 test('sorts in expected order', function (t) {
   t.equal(
-    bops.to(bytewise.encode(shuffled.sort(typewise.compare)), 'hex'),
-    bops.to(bytewise.encode(expected), 'hex')
+    bytewise.encode(shuffled.sort(typewise.compare)).toString('hex'),
+    bytewise.encode(expected).toString('hex')
   );
   t.end();
 });
@@ -49,8 +48,8 @@ test('sorts with same order when encoded', function (t) {
     .map(bytewise.decode);
 
   t.equal(
-    bops.to(bytewise.encode(decoded), 'hex'),
-    bops.to(bytewise.encode(expected), 'hex')
+    bytewise.encode(decoded).toString('hex'),
+    bytewise.encode(expected).toString('hex')
   );
   t.end();
 });
