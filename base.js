@@ -11,8 +11,11 @@ var codecs = require('./codecs')
 //
 // boundary types
 //
-base.bound.upper.byte = 0x00
-base.bound.lower.byte = 0xff
+base.bound.upper.byte = 0xff
+base.bound.upper.decodable = false
+
+base.bound.lower.byte = 0x00
+base.bound.lower.decodable = false
 
 //
 // value types

@@ -40,7 +40,7 @@ function serialize(type, source) {
 //
 // core encode logic
 //
-bytewise.encode = function(source) {
+bytewise.encode = function(source, options) {
   //
   // check for invalid/incomparable values
   //
@@ -181,6 +181,7 @@ bytewise.type = 'bytewise-core'
 //
 // expose type information
 //
+bytewise.bound = base.bound
 bytewise.sorts = base.sorts
 bytewise.compare = base.compare
 bytewise.equal = base.equal

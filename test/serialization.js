@@ -57,7 +57,7 @@ tape('simple equal', function (t) {
 tape('encoded buffer toStrings to hex by default', function (t) {
   var encoded = bytewise.encode(sample)
   t.equal('' + encoded, encoded.toString('hex'))
-  t.equal(new Buffer(encoded).toString(), encoded.toString('utf8'))
-  t.equal(encoded.toString('ascii'), new Buffer(encoded.toString('hex'), 'hex').toString('ascii'))
+  t.equal(Buffer(encoded).toString(), encoded.toString('utf8'))
+  t.equal(encoded.toString('ascii'), Buffer(encoded.toString('hex'), 'hex').toString('ascii'))
   t.end()
 })
