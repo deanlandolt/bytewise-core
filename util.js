@@ -31,7 +31,7 @@ util.encodeFloat = function (value) {
 }
 
 util.decodeFloat = function (buffer, base, negative) {
-  assert.equal(buffer.length, FLOAT_LENGTH, 'Invalid float encoding length')
+  assert(buffer.length === FLOAT_LENGTH, 'Invalid float encoding length')
 
   if (negative)
     buffer = util.invertBytes(buffer)
@@ -76,7 +76,9 @@ util.escapeFlat = function (buffer) {
 
 util.unescapeFlat = function (buffer) {
   var b, bytes = []
-  // Don't escape last byte
+  //
+  // don't escape last byte
+  //
   for (var i = 0, end = buffer.length; i < end; ++i) {
     b = buffer[i]
 
@@ -107,8 +109,17 @@ util.encodeList = function (source, base) {
 
   for (var i = 0, end = source.length; i < end; ++i) {
     var buffer = base.encode(source[i])
+
+    //
+    // bypass assertions for undecodable types (i.e. range bounds)
+    //
+    if (buffer.undecodable) {
+      buffers.push(buffer)
+      continue
+    }
+
     var sort = base.getType(buffer[0])
-    assert.ok(sort, 'List encoding failure: ' + buffer)
+    assert(sort, 'List encoding failure: ' + buffer)
 
     //
     // sorts which need escapement when nested have an escape function on codec
@@ -130,7 +141,7 @@ util.encodeList = function (source, base) {
 util.decodeList = function (buffer, base) {
   var result = util.parse(buffer, base)
 
-  assert.equal(result[1], buffer.length, 'Invalid encoding')
+  assert(result[1] === buffer.length, 'Invalid encoding')
   return result[0]
 }
 

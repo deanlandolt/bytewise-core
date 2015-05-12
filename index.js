@@ -5,20 +5,33 @@ var codecs = require('./codecs')
 var bytewise = exports
 
 //
+// expose type information
+//
+var bound = bytewise.bound = base.bound
+var sorts = bytewise.sorts = base.sorts
+bytewise.compare = base.compare
+bytewise.equal = base.equal
+
+//
 // generate a buffer with type's byte prefix from source value
 //
 function serialize(type, source) {
-  var byte = type.byte
-  assert.ok(byte >= 0 && byte < 256, 'Invalid type byte prefix: ' + byte)
-
   var codec = type.codec
   if (!codec)
-    return bytewise.postEncode(new Buffer([ byte ]))
+    return bytewise.finalizeEncoding(new Buffer([ type.byte ]))
 
   var buffer = codec.encode(source, bytewise)
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
-  return bytewise.postEncode(Buffer.concat([ new Buffer([ byte ]), buffer ], hint))
+  var buffers = [ new Buffer([ type.byte ]), buffer ]
+  return bytewise.finalizeEncoding(Buffer.concat(buffers, hint))
+}
 
+function initializeBound(buffer) {
+  //
+  // add some metadata to let the encoder know not to assert
+  //
+  buffer.undecodable = true
+  return bytewise.finalizeEncoding(buffer)
 }
 
 //
@@ -28,21 +41,17 @@ bytewise.encode = function(source, options) {
   //
   // check for invalid/incomparable values
   //
-  assert.equal(base.invalid(source), false, 'Invalid value')
+  assert(!base.invalid(source), 'Invalid value')
 
   //
-  // encode boundary types
+  // encode bound types (ranges)
   //
-  if (base.bound.upper.is(source))
-    return serialize(base.bound.upper, source)
-
-  if (base.bound.lower.is(source))
-    return serialize(base.bound.lower, source)
+  if (base.bound.type(source))
+    return initializeBound(source.bound.encode(source))
 
   //
   // encode standard value-typed sorts
   //
-  var sorts = base.sorts
   var order = base.order
   var sort
   for (var i = 0, length = order.length; i < length; ++i) {
@@ -61,14 +70,14 @@ bytewise.encode = function(source, options) {
       //
       // source is an unsupported subsort
       //
-      assert.fail(source, sort, 'Unsupported sort value')
+      assert(false, 'Unsupported sort value')
     }
   }
 
   //
   // no type descriptor found
   //
-  assert.fail(source, null, 'Unknown value')
+  assert(false, 'Unknown value')
 }
 
 //
@@ -84,27 +93,27 @@ bytewise.decode = function (buffer) {
   var byte = buffer[0]
   var type = bytewise.getType(byte)
 
-  assert.ok(type, 'Invalid encoding: ' + buffer)
+  assert(type, 'Invalid encoding: ' + buffer)
 
   //
   // if type provides a decoder it is passed the base type system as second arg
   //
   var codec = type.codec
   if (codec)
-    return bytewise.postDecode(codec.decode(buffer.slice(1), bytewise))
+    return bytewise.finalizeDecoding(codec.decode(buffer.slice(1), bytewise))
 
   //
   // nullary types without a codec must provide a value for their decoded form
   //
   assert('value' in type, 'Unsupported encoding: ' + buffer)
-  return bytewise.postDecode(type.value)
+  return bytewise.finalizeDecoding(type.value)
 }
 
 
 //
 // invoked after encoding with encoded buffer instance
 //
-bytewise.postEncode = function (buffer) {
+bytewise.finalizeEncoding = function (buffer) {
 
   //
   // override buffer string decoding to hex by default to help coercion issues
@@ -122,7 +131,7 @@ bytewise.postEncode = function (buffer) {
 //
 // invoked after decoding with decoded value
 //
-bytewise.postDecode = function (value) {
+bytewise.finalizeDecoding = function (value) {
   return value
 }
 
@@ -160,15 +169,8 @@ bytewise.getType = function (byte) {
     PREFIX_REGISTRY = {}
 
     //
-    // register boundary types
-    //
-    registerType(base.bound.upper)
-    registerType(base.bound.lower)
-
-    //
     // register sorts
     //
-    var sorts = base.sorts
     var sort
     for (var key in sorts) {
       sort = sorts[key]
@@ -189,10 +191,3 @@ bytewise.buffer = true
 bytewise.stringCodec = codecs.HEX
 bytewise.type = 'bytewise-core'
 
-//
-// expose type information
-//
-bytewise.bound = base.bound
-bytewise.sorts = base.sorts
-bytewise.compare = base.compare
-bytewise.equal = base.equal

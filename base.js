@@ -11,11 +11,13 @@ var codecs = require('./codecs')
 //
 // boundary types
 //
-base.bound.upper.byte = 0xff
-base.bound.upper.decodable = false
 
-base.bound.lower.byte = 0x00
-base.bound.lower.decodable = false
+base.bound.encode = function (instance) {
+  //
+  // handle base bound types
+  //
+  return new Buffer([ instance.upper ? 0xff : 0x00 ])
+}
 
 //
 // value types
@@ -26,8 +28,11 @@ sorts.void.byte = 0xf0
 
 sorts.null.byte = 0x10
 
-sorts.boolean.sorts.false.byte = 0x20
-sorts.boolean.sorts.true.byte = 0x21
+
+var BOOLEAN = sorts.boolean
+
+BOOLEAN.sorts.false.byte = 0x20
+BOOLEAN.sorts.true.byte = 0x21
 
 
 var NUMBER = sorts.number
@@ -48,32 +53,46 @@ DATE.sorts.positive.byte = 0x52
 DATE.sorts.negative.codec = codecs.PRE_EPOCH_DATE
 DATE.sorts.positive.codec = codecs.POST_EPOCH_DATE
 
-DATE.bound.lower.byte = 0x50
-DATE.bound.upper.byte = 0x53
-
 
 var BINARY = sorts.binary
 BINARY.byte = 0x60
 BINARY.codec = codecs.UINT8
-BINARY.bound.upper = 0x61
 
 
 var STRING = sorts.string
 STRING.byte = 0x70
 STRING.codec = codecs.UTF8
-STRING.bound.upper.byte = 0x71
+
+STRING.bound.encode = function (instance) {
+  if (instance.value === undefined)
+    return new Buffer([ instance.upper ? 0x71 : 0x70 ])
+
+  return Buffer.concat([
+    new Buffer([ STRING.byte ]),
+    STRING.codec.encode(instance.value || ''),
+    new Buffer([ instance.upper ? 0xff : 0x00 ])
+  ])
+}
 
 
 var ARRAY = sorts.array
 ARRAY.byte = 0xa0
 ARRAY.codec = codecs.LIST
-ARRAY.bound.upper.byte = 0xa1
+
+ARRAY.bound.encode = function (instance) {
+  if (instance.value === undefined)
+    return new Buffer([ instance.upper ? 0xa1 : 0xa0 ])
+
+  var prefix = ARRAY.codec.encode(instance.value).slice(0, -1)
+  if (instance.upper)
+    return Buffer.concat([ prefix, new Buffer([ 0xff ]) ])
+
+  return prefix
+}
 
 
-var OBJECT = sorts.object
-OBJECT.byte = 0xb0
-OBJECT.codec = codecs.HASH
-
-OBJECT.bound.upper.byte = 0xb1
+// var OBJECT = sorts.object
+// OBJECT.byte = 0xb0
+// OBJECT.codec = codecs.HASH
 
 module.exports = base
