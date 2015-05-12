@@ -7,31 +7,23 @@ var bytewise = exports
 //
 // expose type information
 //
-var bound = bytewise.bound = base.bound
 var sorts = bytewise.sorts = base.sorts
+bytewise.bound = base.bound
 bytewise.compare = base.compare
 bytewise.equal = base.equal
 
 //
 // generate a buffer with type's byte prefix from source value
 //
-function serialize(type, source) {
+function serialize(type, source, options) {
   var codec = type.codec
   if (!codec)
-    return bytewise.finalizeEncoding(new Buffer([ type.byte ]))
+    return encoded(new Buffer([ type.byte ]), options)
 
   var buffer = codec.encode(source, bytewise)
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
   var buffers = [ new Buffer([ type.byte ]), buffer ]
-  return bytewise.finalizeEncoding(Buffer.concat(buffers, hint))
-}
-
-function initializeBound(buffer) {
-  //
-  // add some metadata to let the encoder know not to assert
-  //
-  buffer.undecodable = true
-  return bytewise.finalizeEncoding(buffer)
+  return encoded(Buffer.concat(buffers, hint), options)
 }
 
 //
@@ -46,8 +38,9 @@ bytewise.encode = function(source, options) {
   //
   // encode bound types (ranges)
   //
-  if (base.bound.type(source))
-    return initializeBound(source.bound.encode(source))
+  var boundary = base.bound.getBoundary(source)
+  if (boundary)
+    return boundary.encode(source, bytewise)
 
   //
   // encode standard value-typed sorts
@@ -65,7 +58,7 @@ bytewise.encode = function(source, options) {
       for (key in subsorts) {
         var subsort = subsorts[key]
         if (subsort.is(source)) 
-          return serialize(subsort, source)
+          return serialize(subsort, source, options)
       }
       //
       // source is an unsupported subsort
@@ -83,7 +76,9 @@ bytewise.encode = function(source, options) {
 //
 // core decode logic
 //
-bytewise.decode = function (buffer) {
+bytewise.decode = function (buffer, options) {
+  assert(!buffer.undecodable, 'Encoded value cannot be decoded')
+
   //
   // attempt to decode string input using configurable codec
   //
@@ -100,20 +95,29 @@ bytewise.decode = function (buffer) {
   //
   var codec = type.codec
   if (codec)
-    return bytewise.finalizeDecoding(codec.decode(buffer.slice(1), bytewise))
+    return decoded(codec.decode(buffer.slice(1), bytewise), options)
 
   //
   // nullary types without a codec must provide a value for their decoded form
   //
   assert('value' in type, 'Unsupported encoding: ' + buffer)
-  return bytewise.finalizeDecoding(type.value)
+  return decoded(type.value, options)
 }
 
+//
+// process top level
+//
+function encoded(value, options) {
+  if (options === null)
+    return value
+
+  return bytewise.encoded(value, options)
+}
 
 //
 // invoked after encoding with encoded buffer instance
 //
-bytewise.finalizeEncoding = function (buffer) {
+bytewise.encoded = function (buffer) {
 
   //
   // override buffer string decoding to hex by default to help coercion issues
@@ -128,10 +132,17 @@ bytewise.finalizeEncoding = function (buffer) {
   return buffer
 }
 
+function decoded(value, options) {
+  if (options === null)
+    return value
+
+  return bytewise.decoded(value, options)
+}
+
 //
 // invoked after decoding with decoded value
 //
-bytewise.finalizeDecoding = function (value) {
+bytewise.decoded = function (value) {
   return value
 }
 

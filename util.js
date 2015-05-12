@@ -106,14 +106,17 @@ util.unescapeFlat = function (buffer) {
 util.encodeList = function (source, base) {
   // TODO: pass around a map of references already encoded to detect cycles
   var buffers = []
+  var undecodable
 
   for (var i = 0, end = source.length; i < end; ++i) {
-    var buffer = base.encode(source[i])
+    var buffer = base.encode(source[i], null)
 
     //
     // bypass assertions for undecodable types (i.e. range bounds)
     //
-    if (buffer.undecodable) {
+    var config = buffer.bytewise
+    undecodable || (undecodable = config && config.undecodable)
+    if (undecodable) {
       buffers.push(buffer)
       continue
     }
@@ -135,7 +138,13 @@ util.encodeList = function (source, base) {
   // close the list with an end byte
   //
   buffers.push(new Buffer([ 0x00 ]))
-  return Buffer.concat(buffers)
+  buffer = Buffer.concat(buffers)
+
+  //
+  // pass along undecoable bit if set
+  //
+  undecodable && (buffer.undecodable = undecodable)
+  return buffer
 }
 
 util.decodeList = function (buffer, base) {
@@ -182,7 +191,7 @@ util.parse = function (buffer, base, sort) {
   // nullary
   //
   if (sort && !codec)
-    return [ base.decode(new Buffer([ sort.byte ])), 0 ]
+    return [ base.decode(new Buffer([ sort.byte ]), null), 0 ]
 
   //
   // custom parse implementation provided by sort
@@ -237,4 +246,50 @@ util.parse = function (buffer, base, sort) {
   // return parsed list and bytes consumed (plus a byte for the closing tag)
   //
   return [ list, index + 1 ]
+}
+
+//
+// helpers for encoding boundary types
+//
+function encodeBound(data, base) {
+  var prefix = data.prefix
+  var buffer = prefix ? base.encode(prefix, null) : new Buffer([ data.byte ])
+
+  if (data.upper)
+    buffer = Buffer.concat([ buffer, new Buffer([ 0xff ]) ])
+
+  return util.encodedBound(data, buffer)
+}
+
+util.encodeBound = function (data, base) {
+  return util.encodedBound(data, encodeBound(data, base))
+}
+
+util.encodeBaseBound = function (data, base) {
+  return util.encodedBound(data, new Buffer([ data.upper ? 0xff : 0x00 ]))
+}
+
+util.encodeListBound = function (data, base) {
+  var buffer = encodeBound(data, base)
+
+  if (data.prefix) {
+    //
+    // trim off end byte if a prefix, and do some hackery if an upper bound
+    //
+    var endByte = buffer[buffer.length - 1]
+    buffer = buffer.slice(0, -1)
+    if (data.upper)
+      buffer[buffer.length - 1] = endByte
+  }
+
+  return util.encodedBound(data, buffer)
+}
+
+//
+// add bound instance as metadata on generated buffer instance
+//
+util.encodedBound = function (data, buffer) {
+  data.undecodable = true
+  buffer.bytewise = data
+  return buffer
 }
