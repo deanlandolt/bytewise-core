@@ -1,8 +1,11 @@
-var assert = require('assert')
-
 var util = exports
 
 var FLOAT_LENGTH = 8
+
+var assert = util.assert = function (test, message) {
+  if (!test)
+    throw new TypeError(message)
+}
 
 util.invertBytes = function (buffer) {
   var bytes = []
@@ -104,7 +107,7 @@ util.unescapeFlat = function (buffer) {
 }
 
 util.encodeList = function (source, base) {
-  // TODO: pass around a map of references already encoded to detect cycles
+  // TODO: cycle detection
   var buffers = []
   var undecodable
 
@@ -114,8 +117,7 @@ util.encodeList = function (source, base) {
     //
     // bypass assertions for undecodable types (i.e. range bounds)
     //
-    var config = buffer.bytewise
-    undecodable || (undecodable = config && config.undecodable)
+    undecodable || (undecodable = buffer.undecodable)
     if (undecodable) {
       buffers.push(buffer)
       continue
@@ -141,7 +143,7 @@ util.encodeList = function (source, base) {
   buffer = Buffer.concat(buffers)
 
   //
-  // pass along undecoable bit if set
+  // propagate undecoable bit if set
   //
   undecodable && (buffer.undecodable = undecodable)
   return buffer
@@ -286,10 +288,9 @@ util.encodeListBound = function (data, base) {
 }
 
 //
-// add bound instance as metadata on generated buffer instance
+// add some metadata to generated buffer instance
 //
 util.encodedBound = function (data, buffer) {
-  data.undecodable = true
-  buffer.bytewise = data
+  buffer.undecodable = true
   return buffer
 }

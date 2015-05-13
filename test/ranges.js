@@ -5,59 +5,53 @@ var tape = module.exports = require('tape')
 var ARRAY = bytewise.sorts.array
 var STRING = bytewise.sorts.string
 
-function eqHex(t, data, hex) {
-  t.equal(bytewise.encode(data).toString('hex'), hex)
+function eqHex(t, range, hexExpected) {
+  t.equal(bytewise.encode(range).toString('hex'), hexExpected)
 }
 
 function decodeThrows(t, range) {
+  var encoded = bytewise.encode(range)
+  // t.equal(encoded.undecodable, true, 'range should have undecodable bit set')
   t.throws(function () {
-    bytewise.decode(bytewise.encode(range))
+    bytewise.decode(encoded)
   }, 'cannot decode a range')
 }
 
-tape('lower bound', function (t) {
+tape('bounded ranges', function (t) {
   var range = bytewise.bound.lower()
   eqHex(t, range, '00')
   decodeThrows(t, range)
-  t.end()
-})
 
-tape('upper bound', function (t) {
-  var range = bytewise.bound.upper()
+  range = bytewise.bound.upper()
   eqHex(t, range, 'ff')
   decodeThrows(t, range)
   t.end()
 })
 
-tape('lower bound in array', function (t) {
+tape('bounded arrays', function (t) {
   eqHex(t, [ 'foo' ], 'a070666f6f0000')
+
   var range = [ 'foo', bytewise.bound.lower() ]
   eqHex(t, range, 'a070666f6f000000')
   decodeThrows(t, range)
-  t.end()
-})
 
-tape('upper bound in array', function (t) {
-  var range = [ 'foo', bytewise.bound.upper() ]
+  range = [ 'foo', bytewise.bound.upper() ]
   eqHex(t, range, 'a070666f6f00ff00')
   decodeThrows(t, range)
   t.end()
 })
 
-tape('lower bound on array prefix', function (t) {
-  var range = ARRAY.bound.lower([ 'foo', 'bar' ])
+tape('prefix-bounded arrays', function (t) {
   var prefix = bytewise.encode([ 'foo', 'bar' ])
+
+  var range = ARRAY.bound.lower([ 'foo', 'bar' ])
   t.equal(
     bytewise.encode(range).toString('hex'),
     prefix.toString('hex').slice(0, -2)
   )
   decodeThrows(t, range)
-  t.end()
-})
 
-tape('upper bound on array prefix', function (t) {
-  var range = ARRAY.bound.upper([ 'foo', 'bar' ])
-  var prefix = bytewise.encode([ 'foo', 'bar' ])
+  range = ARRAY.bound.upper([ 'foo', 'bar' ])
   t.equal(
     bytewise.encode(range).toString('hex'),
     prefix.toString('hex').slice(0, -2) + 'ff'
@@ -66,47 +60,41 @@ tape('upper bound on array prefix', function (t) {
   t.end()
 })
 
-tape('lower bound in nested array', function (t) {
+tape('bounded ranges, nested', function (t) {
   eqHex(t, [ 'foo', [ 'bar' ] ], 'a070666f6f00a070626172000000')
+
   var range = [ 'foo', [ 'bar', bytewise.bound.lower() ] ]
   eqHex(t, range, 'a070666f6f00a07062617200000000')
   decodeThrows(t, range)
-  t.end()
-})
 
-tape('upper bound in nested array', function (t) {
   eqHex(t, [ 'foo', [ 'bar' ] ], 'a070666f6f00a070626172000000')
-  var range = [ 'foo', [ 'bar', bytewise.bound.upper() ] ]
+  range = [ 'foo', [ 'bar', bytewise.bound.upper() ] ]
   eqHex(t, range, 'a070666f6f00a07062617200ff0000')
   decodeThrows(t, range)
   t.end()
 })
 
-tape('lower bound on string prefix', function (t) {
+tape('prefix-bounded strings', function (t) {
   eqHex(t, 'baz', '7062617a')
+
   var range = STRING.bound.lower('baz')
   eqHex(t, range, '7062617a')
-  // decodeThrows(t, range)
-  t.end()
-})
+  decodeThrows(t, range)
 
-tape('upper bound on string prefix', function (t) {
-  var range = STRING.bound.upper('baz')
+  range = STRING.bound.upper('baz')
   eqHex(t, range, '7062617aff')
-  // decodeThrows(t, range)
+  decodeThrows(t, range)
   t.end()
 })
 
-tape('lower bound on nested string prefix', function (t) {
+tape('prefix-bounded strings, nested', function (t) {
   eqHex(t, [ 'foo', [ 'bar', 'baz' ] ], 'a070666f6f00a070626172007062617a000000')
+
   var range = [ 'foo', [ 'bar', STRING.bound.lower('baz') ] ]
   eqHex(t, range, 'a070666f6f00a070626172007062617a0000')
-  // decodeThrows(t, range)
-  t.end()
-})
+  decodeThrows(t, range)
 
-tape('upper bound on nested string prefix', function (t) {
-  var range = [ 'foo', [ 'bar', STRING.bound.upper('baz') ] ]
+  range = [ 'foo', [ 'bar', STRING.bound.upper('baz') ] ]
   eqHex(t, range, 'a070666f6f00a070626172007062617aff0000')
   decodeThrows(t, range)
   t.end()
