@@ -45,7 +45,12 @@ util.decodeFloat = function (buffer, base, negative) {
   return negative ? -value : value
 }
 
-util.escapeFlat = function (buffer) {
+//
+// sigil for controlling the escapement functions (TODO: clean this up)
+//
+var SKIP_HIGH_BYTES = {}
+
+util.escapeFlat = function (buffer, options) {
   //
   // escape high and low bytes 0x00 and 0xff (and by necessity, 0x01 and 0xfe)
   //
@@ -62,7 +67,7 @@ util.escapeFlat = function (buffer) {
     //
     // escape high bytes with 0xfe and by subtracting 1
     //
-    else if (b === 0xfe || b === 0xff)
+    else if (options !== SKIP_HIGH_BYTES && (b === 0xfe || b === 0xff))
       bytes.push(0xfe, b - 1)
 
     //
@@ -79,7 +84,7 @@ util.escapeFlat = function (buffer) {
   return new Buffer(bytes)
 }
 
-util.unescapeFlat = function (buffer) {
+util.unescapeFlat = function (buffer, options) {
   var b, bytes = []
   //
   // don't escape last byte
@@ -96,7 +101,7 @@ util.unescapeFlat = function (buffer) {
     //
     // if high-byte escape tag use the following byte plus 1
     //
-    else if (b === 0xfe)
+    else if (options !== SKIP_HIGH_BYTES && b === 0xfe)
       bytes.push(buffer[++i] + 1)
 
     //
@@ -106,6 +111,14 @@ util.unescapeFlat = function (buffer) {
       bytes.push(b)
   }
   return new Buffer(bytes)
+}
+
+util.escapeFlatLow = function (buffer) {
+  return util.escapeFlat(buffer, SKIP_HIGH_BYTES)
+}
+
+util.unescapeFlatLow = function (buffer) {
+  return util.unescapeFlat(buffer, SKIP_HIGH_BYTES)
 }
 
 util.encodeList = function (source, base) {
