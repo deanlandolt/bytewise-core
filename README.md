@@ -3,9 +3,6 @@ bytewise-core
 
 A binary serialization that allows efficient comparison of certain useful data structures in a way that respects the [typewise](https://github.com/deanlandolt/typewise) sort order.
 
-[![build status](https://secure.travis-ci.org/deanlandolt/bytewise-core.png)](http://travis-ci.org/deanlandolt/bytewise)
-[![testling badge](https://ci.testling.com/deanlandolt/bytewise-core.png)](https://ci.testling.com/deanlandolt/bytewise)
-
 This library defines a total order for well-structured keyspaces in key value stores. The ordering is a superset of the sorting algorithm defined by [IndexedDB](http://www.w3.org/TR/IndexedDB/#key-construct) and the one defined by [CouchDB](http://wiki.apache.org/couchdb/View_collation). This serialization makes it easy to take advantage of the benefits of structured indexing in systems with fast but naïve binary indexing (key/value databases).
 
 
