@@ -77,10 +77,6 @@ util.escapeFlat = function (buffer, options) {
       bytes.push(b)
   }
 
-  //
-  // add end byte
-  //
-  bytes.push(0x00)
   return new Buffer(bytes)
 }
 
@@ -142,10 +138,10 @@ util.encodeList = function (source, base) {
     assert(sort, 'List encoding failure: ' + buffer)
 
     //
-    // sorts which need escapement when nested have an escape function on codec
+    // escape sorts if it requires it and add closing byte for element
     //
     if (sort.codec && sort.codec.escape)
-      buffers.push(sort.codec.escape(buffer))
+      buffers.push(sort.codec.escape(buffer), new Buffer([ 0x00 ]))
 
     else
       buffers.push(buffer)
