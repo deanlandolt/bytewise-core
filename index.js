@@ -18,12 +18,16 @@ bytewise.equal = base.equal
 function serialize(type, source, options) {
   var codec = type.codec
   if (!codec)
-    return encoded(new Buffer([ type.byte ]), options)
+    return postEncode(new Buffer([ type.byte ]), options)
 
   var buffer = codec.encode(source, bytewise)
+
+  if (options && options.nested && codec.escape)
+    buffer = codec.escape(buffer)
+
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
   var buffers = [ new Buffer([ type.byte ]), buffer ]
-  return encoded(Buffer.concat(buffers, hint), options)
+  return postEncode(Buffer.concat(buffers, hint), options)
 }
 
 //
@@ -94,56 +98,62 @@ bytewise.decode = function (buffer, options) {
   // if type provides a decoder it is passed the base type system as second arg
   //
   var codec = type.codec
-  if (codec)
-    return decoded(codec.decode(buffer.slice(1), bytewise), options)
+  if (codec) {
+    var decoded = codec.decode(buffer.slice(1), bytewise)
+
+    if (options && options.nested && codec.unescape)
+      decoded = codec.unescape(decoded)
+
+    return postDecode(decoded, options)
+  }
 
   //
   // nullary types without a codec must provide a value for their decoded form
   //
   assert('value' in type, 'Unsupported encoding: ' + buffer)
-  return decoded(type.value, options)
+  return postDecode(type.value, options)
 }
 
 //
 // process top level
 //
-function encoded(value, options) {
+function postEncode(encoded, options) {
   if (options === null)
-    return value
+    return encoded
 
-  return bytewise.encoded(value, options)
+  return bytewise.postEncode(encoded, options)
 }
 
 //
 // invoked after encoding with encoded buffer instance
 //
-bytewise.encoded = function (buffer) {
+bytewise.postEncode = function (encoded) {
 
   //
-  // override buffer string decoding to hex by default to help coercion issues
+  // override buffer toString method to default to hex to help coercion issues
   //
-  buffer.toString = function (encoding) {
+  encoded.toString = function (encoding) {
     if (!encoding)
-      return bytewise.stringCodec.decode(buffer)
+      return bytewise.stringCodec.decode(encoded)
 
-    return Buffer.prototype.toString.apply(buffer, arguments)
+    return Buffer.prototype.toString.apply(encoded, arguments)
   }
 
-  return buffer
+  return encoded
 }
 
-function decoded(value, options) {
+function postDecode(decoded, options) {
   if (options === null)
-    return value
+    return decoded
 
-  return bytewise.decoded(value, options)
+  return bytewise.postDecode(decoded, options)
 }
 
 //
 // invoked after decoding with decoded value
 //
-bytewise.decoded = function (value) {
-  return value
+bytewise.postDecode = function (decoded) {
+  return decoded
 }
 
 
