@@ -11,7 +11,7 @@ function eqHex(t, range, hexExpected) {
 
 function decodeThrows(t, range) {
   var encoded = bytewise.encode(range)
-  // t.equal(encoded.undecodable, true, 'range should have undecodable bit set')
+  // t.ok(encoded.undecodable, 'range should have undecodable bit set')
   t.throws(function () {
     bytewise.decode(encoded)
   }, 'cannot decode a range')

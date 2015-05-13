@@ -1,11 +1,13 @@
 var util = exports
 
-var FLOAT_LENGTH = 8
+util.collation = require('typewise-core/collation')
 
 var assert = util.assert = function (test, message) {
   if (!test)
     throw new TypeError(message)
 }
+
+var FLOAT_LENGTH = 8
 
 util.invertBytes = function (buffer) {
   var bytes = []
