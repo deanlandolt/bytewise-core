@@ -1,6 +1,6 @@
 var util = exports
 
-util.collation = require('typewise-core/collation')
+util.compare = require('typewise-core/collation').bitwise
 
 var assert = util.assert = function (test, message) {
   if (!test)
