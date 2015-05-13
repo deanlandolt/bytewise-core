@@ -1,6 +1,6 @@
 var bytewise = require('../')
+var tape = require('tape')
 var util = require('typewise-core/test/util')
-var tape = module.exports = require('tape')
 
 var ARRAY = bytewise.sorts.array
 var STRING = bytewise.sorts.string
