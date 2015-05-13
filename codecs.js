@@ -68,8 +68,8 @@ codecs.UTF8 = {
   decode: function (buffer) {
     return buffer.toString('utf8')
   },
-  escape: util.escapeFlat,
-  unescape: util.unescapeFlat
+  escape: util.escapeFlatLow,
+  unescape: util.unescapeFlatLow
 }
 
 codecs.UTF8_SHORTLEX = shortlex(codecs.UTF8)
