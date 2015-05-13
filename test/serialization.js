@@ -1,6 +1,6 @@
 var bytewise = require('../')
-var util = require('typewise-core/test/util')
 var tape = require('tape')
+var util = require('typewise-core/test/util')
 
 var sample, shuffled
 

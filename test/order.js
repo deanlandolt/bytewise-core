@@ -1,7 +1,7 @@
 var bytewise = require('../');
 var typewise = require('typewise-core');
 var util = require('typewise-core/test/util');
-var tape = module.exports = require('tape');
+var tape = require('tape');
 
 var expected = [
   -4,

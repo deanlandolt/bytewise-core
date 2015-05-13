@@ -1,5 +1,5 @@
 var bytewise = require('../');
-var tape = module.exports = require('tape');
+var tape = require('tape');
 
 var sample = [
   'foo √',
@@ -39,7 +39,7 @@ var sorted = [
   undefined
 ]
 
-tape('round trip and compare complex value', function (t) {
+tape('round trip compare complex values', function (t) {
   var result = sample.map(bytewise.encode).map(bytewise.decode)
   t.deepEqual(result, sample)
   t.deepEqual(result, result.map(bytewise.encode).map(bytewise.decode))
