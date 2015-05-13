@@ -63,3 +63,14 @@ tape('nested buffers should sort correctly', function (t) {
   t.deepEqual(result.map(toHex), nested.map(toHex))
   t.end()
 })
+
+tape('nested buffers should encode same as top level', function (t) {
+  var value = Buffer('00ff01ff', 'hex')
+  var result = bytewise.encode(value)
+  var nested = bytewise.encode([ value ])
+  //
+  // slice off the array encoding components of nested value to compare
+  //
+  t.equal(nested.slice(1, -2).toString('hex'), result.toString('hex'))
+  t.end()
+})

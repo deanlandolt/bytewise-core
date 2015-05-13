@@ -22,9 +22,6 @@ function serialize(type, source, options) {
 
   var buffer = codec.encode(source, bytewise)
 
-  if (options && options.nested && codec.escape)
-    buffer = codec.escape(buffer)
-
   var hint = typeof codec.length === 'number' ? (codec.length + 1) : void 0 
   var buffers = [ new Buffer([ type.byte ]), buffer ]
   return postEncode(Buffer.concat(buffers, hint), options)
@@ -100,10 +97,6 @@ bytewise.decode = function (buffer, options) {
   var codec = type.codec
   if (codec) {
     var decoded = codec.decode(buffer.slice(1), bytewise)
-
-    if (options && options.nested && codec.unescape)
-      decoded = codec.unescape(decoded)
-
     return postDecode(decoded, options)
   }
 

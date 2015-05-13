@@ -77,10 +77,6 @@ util.escapeFlat = function (buffer, options) {
       bytes.push(b)
   }
 
-  //
-  // add end byte
-  //
-  bytes.push(0x00)
   return new Buffer(bytes)
 }
 
@@ -141,14 +137,13 @@ util.encodeList = function (source, base) {
     var sort = base.getType(buffer[0])
     assert(sort, 'List encoding failure: ' + buffer)
 
-    //
-    // sorts which need escapement when nested have an escape function on codec
-    //
-    if (sort.codec && sort.codec.escape)
-      buffers.push(sort.codec.escape(buffer))
+    buffers.push(buffer)
 
-    else
-      buffers.push(buffer)
+    //
+    // add end byte for escaped types
+    //
+    if (sort.codec && sort.codec.escaped)
+      buffers.push(new Buffer([ 0x00 ]))
   }
 
   //
@@ -226,19 +221,18 @@ util.parse = function (buffer, base, sort) {
   //
   // escaped sort, seek to end byte and unescape
   //
-  if (codec && codec.unescape) {
+  if (codec && codec.escaped) {
     for (index = 0, end = buffer.length; index < end; ++index) {
       if (buffer[index] === 0x00)
         break
     }
 
     assert(index < buffer.length, 'No closing byte found for sequence')
-    var unescaped = codec.unescape(buffer.slice(0, index))
 
     //
     // add 1 to index to account for closing tag byte
     //
-    return [ codec.decode(unescaped), index + 1 ]
+    return [ codec.decode(buffer.slice(0, index)), index + 1 ]
   }
 
   //

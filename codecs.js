@@ -2,10 +2,6 @@ var util = require('./util')
 
 var FLOAT_LENGTH = 8
 
-function identity(value) {
-  return value
-}
-
 function shortlexEncode(codec) {
   return function (source, base) {
     // stupid lazy implementation
@@ -53,23 +49,21 @@ codecs.HEX = {
 }
 
 codecs.UINT8 = {
-  encode: identity,
-  decode: identity,
-  escape: util.escapeFlat,
-  unescape: util.unescapeFlat
+  encode: util.escapeFlat,
+  decode: util.unescapeFlat,
+  escaped: true
 }
 
 codecs.UINT8_SHORTLEX = shortlex(codecs.UINT8)
 
 codecs.UTF8 = {
   encode: function (source) {
-    return new Buffer(source, 'utf8')
+    return util.escapeFlatLow(new Buffer(source, 'utf8'))
   },
   decode: function (buffer) {
-    return buffer.toString('utf8')
+    return util.unescapeFlatLow(buffer).toString('utf8')
   },
-  escape: util.escapeFlatLow,
-  unescape: util.unescapeFlatLow
+  escaped: true
 }
 
 codecs.UTF8_SHORTLEX = shortlex(codecs.UTF8)
