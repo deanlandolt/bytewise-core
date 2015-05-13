@@ -90,6 +90,11 @@ assert.deepEqual(decode(key), [ [ 'foo', 10 ], 'bar' ])
 Take a look at the [bytewise](https://github.com/deanlandolt/bytewise#use-cases) library for an idea of what kind of stuff this could be useful for.
 
 
+## Issues
+
+Issues should be reported [here](https://github.com/deanlandolt/bytewise/issues).
+
+
 ## License
 
 [MIT](http://deanlandolt.mit-license.org/)
