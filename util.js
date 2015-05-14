@@ -1,6 +1,25 @@
 var util = exports
 
+//
+// buffer compare
+//
 util.compare = require('typewise-core/collation').bitwise
+
+//
+// buffer equality
+//
+util.equal = function (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b))
+    return
+
+  if (a === b)
+    return true
+
+  if (typeof a.equals === 'function')
+    return a.equals(b)
+
+  return util.compare(a, b) === 0
+}
 
 var assert = util.assert = function (test, message) {
   if (!test)
