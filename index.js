@@ -34,46 +34,38 @@ function serialize(type, source, options) {
 // core encode logic
 //
 bytewise.encode = function(source, options) {
-  //
+
   // check for invalid/incomparable values
-  //
   assert(!base.invalid(source), 'Invalid value')
 
-  //
   // encode bound types (ranges)
-  //
   var boundary = base.bound.getBoundary(source)
   if (boundary)
     return boundary.encode(source, bytewise)
 
-  //
   // encode standard value-typed sorts
-  //
   var order = base.order
   var sort
   for (var i = 0, length = order.length; i < length; ++i) {
     sort = sorts[order[i]]
 
     if (sort.is(source)) {
-      //
+
       // loop over any subsorts defined on sort
-      //
-      var subsorts = sort.sorts ||  { '': sort } // TODO: clean up
+      // TODO: clean up
+      var subsorts = sort.sorts ||  { '': sort }
       for (key in subsorts) {
         var subsort = subsorts[key]
         if (subsort.is(source)) 
           return serialize(subsort, source, options)
       }
-      //
+
       // source is an unsupported subsort
-      //
       assert(false, 'Unsupported sort value')
     }
   }
 
-  //
   // no type descriptor found
-  //
   assert(false, 'Unknown value')
 }
 
@@ -81,22 +73,18 @@ bytewise.encode = function(source, options) {
 // core decode logic
 //
 bytewise.decode = function (buffer, options) {
-  assert(!buffer || !buffer.undecodable, 'Encoded value not decodable')
-
-  //
   // attempt to decode string input using configurable codec
-  //
-  if (typeof buffer === 'string')
+  if (typeof buffer === 'string') {
     buffer = bytewise.stringCodec.encode(buffer)
+  }
+
+  assert(!buffer || !buffer.undecodable, 'Encoded value not decodable')
 
   var byte = buffer[0]
   var type = bytewise.getType(byte)
-
   assert(type, 'Invalid encoding: ' + buffer)
 
-  //
   // if type provides a decoder it is passed the base type system as second arg
-  //
   var codec = type.codec
   if (codec) {
     var decoded = codec.decode(buffer.slice(1), bytewise)
@@ -107,9 +95,7 @@ bytewise.decode = function (buffer, options) {
     return postDecode(decoded, options)
   }
 
-  //
   // nullary types without a codec must provide a value for their decoded form
-  //
   assert('value' in type, 'Unsupported encoding: ' + buffer)
   return postDecode(type.value, options)
 }
@@ -127,11 +113,10 @@ function postEncode(encoded, options) {
 //
 // invoked after encoding with encoded buffer instance
 //
-bytewise.postEncode = function (encoded) {
+bytewise.postEncode = function (encoded, options) {
 
-  //
   // override buffer toString method to default to hex to help coercion issues
-  //
+  // TODO: just return pure buffer, do this toString hackery in bytewise
   encoded.toString = function (encoding) {
     if (!encoding)
       return bytewise.stringCodec.decode(encoded)
@@ -152,7 +137,7 @@ function postDecode(decoded, options) {
 //
 // invoked after decoding with decoded value
 //
-bytewise.postDecode = function (decoded) {
+bytewise.postDecode = function (decoded, options) {
   return decoded
 }
 
@@ -183,25 +168,18 @@ function registerTypes(types) {
 // look up type descriptor associated with a given byte prefix
 //
 bytewise.getType = function (byte) {
-  //
+
   // construct and memoize byte prefix registry on first run
-  //
   if (!PREFIX_REGISTRY) {
     PREFIX_REGISTRY = {}
 
-    //
     // register sorts
-    //
     var sort
     for (var key in sorts) {
       sort = sorts[key]
-      //
+
       // if sort has subsorts register these instead
-      //
-      if (sort.sorts)
-        registerTypes(sort.sorts)
-      else
-        registerType(sort)
+      sort.sorts ? registerTypes(sort.sorts) : registerType(sort)
     }
   }
 
