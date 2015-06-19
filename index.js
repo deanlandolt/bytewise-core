@@ -81,7 +81,7 @@ bytewise.encode = function(source, options) {
 // core decode logic
 //
 bytewise.decode = function (buffer, options) {
-  assert(!buffer.undecodable, 'Encoded value not decodable')
+  assert(!buffer || !buffer.undecodable, 'Encoded value not decodable')
 
   //
   // attempt to decode string input using configurable codec
