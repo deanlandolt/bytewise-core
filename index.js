@@ -54,7 +54,7 @@ bytewise.encode = function(source, options) {
       // loop over any subsorts defined on sort
       // TODO: clean up
       var subsorts = sort.sorts ||  { '': sort }
-      for (key in subsorts) {
+      for (var key in subsorts) {
         var subsort = subsorts[key]
         if (subsort.is(source)) 
           return serialize(subsort, source, options)
